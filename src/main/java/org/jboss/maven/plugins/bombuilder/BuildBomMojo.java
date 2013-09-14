@@ -106,9 +106,12 @@ public class BuildBomMojo
     private Model initializeModel()
     {
         Model pomModel = new Model();
+        pomModel.setModelVersion( "4.0.0" );
+
         pomModel.setGroupId( bomGroupId );
         pomModel.setArtifactId( bomArtifactId );
         pomModel.setVersion( bomVersion );
+        pomModel.setPackaging( "pom" );
 
         pomModel.setName( bomName );
         pomModel.setDescription( bomDescription );
