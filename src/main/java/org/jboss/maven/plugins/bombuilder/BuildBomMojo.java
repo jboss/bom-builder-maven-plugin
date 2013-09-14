@@ -88,7 +88,7 @@ public class BuildBomMojo
     public void execute()
         throws MojoExecutionException
     {
-        getLog().info( "Generating BOM based on GAV: " );
+        getLog().debug( "Generating BOM" );
         Model model = initializeModel();
         addDependencyManagement( model );
         try
@@ -137,6 +137,7 @@ public class BuildBomMojo
             depMgmt.addDependency( dep );
         }
         pomModel.setDependencyManagement( depMgmt );
+        getLog().debug( "Added " + projectArtifacts.size() + " dependencies." );
     }
 
     private void writeModel( Model pomModel )
