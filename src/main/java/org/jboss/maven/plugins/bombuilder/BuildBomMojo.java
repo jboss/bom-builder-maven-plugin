@@ -3,6 +3,9 @@ package org.jboss.maven.plugins.bombuilder;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
@@ -117,7 +120,10 @@ public class BuildBomMojo
 
     private void addDependencyManagement( Model pomModel )
     {
-        Set<Artifact> projectArtifacts = mavenProject.getArtifacts();
+        // Sort the artifacts for readability
+        List<Artifact> projectArtifacts = new ArrayList<Artifact>( mavenProject.getArtifacts() );
+        Collections.sort( projectArtifacts );
+
         DependencyManagement depMgmt = new DependencyManagement();
         for ( Artifact artifact : projectArtifacts )
         {
