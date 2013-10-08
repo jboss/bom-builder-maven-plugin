@@ -23,6 +23,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
+import org.codehaus.plexus.util.StringUtils;
 
 /**
  * Build a BOM based on the dependencies in a GAV
@@ -134,6 +135,14 @@ public class BuildBomMojo
             dep.setGroupId( artifact.getGroupId() );
             dep.setArtifactId( artifact.getArtifactId() );
             dep.setVersion( artifact.getVersion() );
+            if ( !StringUtils.isEmpty( artifact.getClassifier() ))
+            {
+                dep.setClassifier( artifact.getClassifier() );
+            }
+            if ( !StringUtils.isEmpty( artifact.getType() ))
+            {
+                dep.setType( artifact.getType() );
+            }
             depMgmt.addDependency( dep );
         }
         pomModel.setDependencyManagement( depMgmt );
