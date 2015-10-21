@@ -10,7 +10,7 @@ the current project.
 
 Usage
 -----
-The plugin is configure in the "plugins" section of the pom.
+The plugin is configured in the "plugins" section of the pom.
 
     <plugins>
       <plugin>
@@ -35,4 +35,50 @@ The plugin is configure in the "plugins" section of the pom.
       </plugin>
     </plugins>
 
+
+Config Parameters
+-----------------
+bomGroupId - The groupId to set in the generated BOM
+bomArtifactId - The artifactId to set in the generated BOM
+bomVersion - The version to set in the generated BOM
+bomName - The name to set in the generated BOM
+bomDescription - The description to set in the generated BOM
+exclusions - A list of exclusions to set in the genertated BOM
+
+Each exclusion should contain four parameters:
+  - dependencyGroupId
+  - dependencyArtifactId
+  - exclusionGroupId
+  - exclusionArtifactId
+
+Exclusion Config Example
+-------------------
+
+    <configuration>
+      <bomGroupId>org.test</bomGroupId>
+      <bomArtifactId>junit-bom</bomArtifactId>
+      <bomVersion>1.0</bomVersion>
+      <exclusions>
+        <exclusion>
+          <dependencyGroupId>junit</dependencyGroupId>
+          <dependencyArtifactId>junit</dependencyArtifactId>
+          <exclusionGroupId>org.hamcrest</exclusionGroupId>
+          <exclusionArtifactId>hamcrest</exclusionArtifactId>
+        </exclusion>
+      </exclusions>
+    </configuration>
+
+The above config will result in POM output that looks similar to the following:
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.8</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>hamcrest</artifactId>
+          <groupId>org.hamcrest</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
 

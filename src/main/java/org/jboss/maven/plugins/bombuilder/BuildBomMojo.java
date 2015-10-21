@@ -4,12 +4,17 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.metadata.ArtifactMetadata;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
+import org.apache.maven.model.Exclusion;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.ModelBuilder;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
@@ -66,6 +71,14 @@ public class BuildBomMojo
      */
     @Parameter( defaultValue = "bom-pom.xml" )
     private String outputFilename;
+
+    /**
+     * Whether the BOM should include the dependency exclusions that
+     * are present in the source POM.  By default the exclusions
+     * will not be copied to the new BOM.
+     */
+    @Parameter
+    private List<BomExclusion> exclusions;
 
     /**
      * The current project
@@ -142,10 +155,25 @@ public class BuildBomMojo
             {
                 dep.setType( artifact.getType() );
             }
+            if (exclusions != null) {
+                applyExclusions(artifact, dep);
+            }
             depMgmt.addDependency( dep );
         }
         pomModel.setDependencyManagement( depMgmt );
         getLog().debug( "Added " + projectArtifacts.size() + " dependencies." );
+    }
+
+    private void applyExclusions(Artifact artifact, Dependency dep) {
+        for (BomExclusion exclusion : exclusions) {
+            if (exclusion.getDependencyGroupId().equals(artifact.getGroupId()) &&
+                    exclusion.getDependencyArtifactId().equals(artifact.getArtifactId())) {
+                Exclusion ex = new Exclusion();
+                ex.setGroupId(exclusion.getExclusionGroupId());
+                ex.setArtifactId(exclusion.getExclusionArtifactId());
+                dep.addExclusion(ex);
+            }
+        }
     }
 
     private void writeModel( Model pomModel )
