@@ -4,14 +4,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.metadata.ArtifactMetadata;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Exclusion;
@@ -86,14 +82,14 @@ public class BuildBomMojo
     @Component
     private MavenProject mavenProject;
 
-    /** 
-     * 
+    /**
+     *
      */
     @Component
     private ModelBuilder modelBuilder;
 
-    /** 
-     * 
+    /**
+     *
      */
     @Component
     private ProjectBuilder projectBuilder;
