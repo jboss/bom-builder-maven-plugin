@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Dependency;
@@ -35,6 +36,8 @@ import static org.codehaus.plexus.util.StringUtils.trim;
 public class BuildBomMojo
     extends AbstractMojo
 {
+
+    private static final String VERSION_PROPERTY_PREFIX = "version.";
     /**
      * BOM groupId
      */
@@ -60,6 +63,12 @@ public class BuildBomMojo
     private String bomName;
 
     /**
+     * BOM name
+     */
+    @Parameter
+    private boolean addVersionProperties;
+
+   /**
      * BOM description
      */
     @Parameter( defaultValue = "" )
@@ -145,12 +154,21 @@ public class BuildBomMojo
         List<Artifact> projectArtifacts = new ArrayList<Artifact>( mavenProject.getArtifacts() );
         Collections.sort( projectArtifacts );
 
+        Properties versionProperties = new Properties();
         DependencyManagement depMgmt = new DependencyManagement();
         for ( Artifact artifact : projectArtifacts )
         {
             if (isExcludedDependency(artifact)) {
                 continue;
             }
+
+            String versionPropertyName = VERSION_PROPERTY_PREFIX + artifact.getGroupId();
+            if (versionProperties.getProperty(versionPropertyName) != null
+                && !versionProperties.getProperty(versionPropertyName).equals(artifact.getVersion())) {
+                versionPropertyName = VERSION_PROPERTY_PREFIX + artifact.getGroupId() + "." + artifact.getArtifactId();
+            }
+            versionProperties.setProperty(versionPropertyName, artifact.getVersion());
+
             Dependency dep = new Dependency();
             dep.setGroupId( artifact.getGroupId() );
             dep.setArtifactId( artifact.getArtifactId() );
@@ -169,6 +187,9 @@ public class BuildBomMojo
             depMgmt.addDependency( dep );
         }
         pomModel.setDependencyManagement( depMgmt );
+        if (addVersionProperties) {
+            pomModel.getProperties().putAll(versionProperties);
+        }
         getLog().debug( "Added " + projectArtifacts.size() + " dependencies." );
     }
 
