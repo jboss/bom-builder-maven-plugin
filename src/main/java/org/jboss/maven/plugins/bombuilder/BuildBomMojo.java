@@ -4,14 +4,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.metadata.ArtifactMetadata;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Exclusion;
@@ -28,6 +24,9 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.codehaus.plexus.util.StringUtils;
+
+import static org.codehaus.plexus.util.StringUtils.defaultString;
+import static org.codehaus.plexus.util.StringUtils.trim;
 
 /**
  * Build a BOM based on the dependencies in a GAV
@@ -81,19 +80,25 @@ public class BuildBomMojo
     private List<BomExclusion> exclusions;
 
     /**
+     * List of dependencies which should not be added to BOM
+     */
+    @Parameter
+    private List<DependencyExclusion> dependencyExclusions;
+
+    /**
      * The current project
      */
     @Component
     private MavenProject mavenProject;
 
-    /** 
-     * 
+    /**
+     *
      */
     @Component
     private ModelBuilder modelBuilder;
 
-    /** 
-     * 
+    /**
+     *
      */
     @Component
     private ProjectBuilder projectBuilder;
@@ -143,6 +148,9 @@ public class BuildBomMojo
         DependencyManagement depMgmt = new DependencyManagement();
         for ( Artifact artifact : projectArtifacts )
         {
+            if (isExcludedDependency(artifact)) {
+                continue;
+            }
             Dependency dep = new Dependency();
             dep.setGroupId( artifact.getGroupId() );
             dep.setArtifactId( artifact.getArtifactId() );
@@ -162,6 +170,33 @@ public class BuildBomMojo
         }
         pomModel.setDependencyManagement( depMgmt );
         getLog().debug( "Added " + projectArtifacts.size() + " dependencies." );
+    }
+
+    boolean isExcludedDependency(Artifact artifact) {
+        if (dependencyExclusions == null || dependencyExclusions.size() == 0) {
+            return false;
+        }
+        for (DependencyExclusion exclusion : dependencyExclusions) {
+            if (matchesExcludedDependency(artifact, exclusion)) {
+                getLog().debug( "Artifact " + artifact.getGroupId() + ":" + artifact.getArtifactId() + " matches excluded dependency " + exclusion.getGroupId() + ":" + exclusion.getArtifactId() );
+                return  true;
+            }
+        }
+        return false;
+    }
+
+    boolean matchesExcludedDependency(Artifact artifact, DependencyExclusion exclusion) {
+        String groupId = defaultAndTrim(artifact.getGroupId());
+        String artifactId = defaultAndTrim(artifact.getArtifactId());
+        String exclusionGroupId = defaultAndTrim(exclusion.getGroupId());
+        String exclusionArtifactId = defaultAndTrim(exclusion.getArtifactId());
+        boolean groupIdMatched = ("*".equals (exclusionGroupId) || groupId.equals(exclusionGroupId));
+        boolean artifactIdMatched = ("*".equals (exclusionArtifactId) || artifactId.equals(exclusionArtifactId));
+        return groupIdMatched && artifactIdMatched;
+    }
+
+    private String defaultAndTrim(String string) {
+        return defaultString(trim(string), "");
     }
 
     private void applyExclusions(Artifact artifact, Dependency dep) {

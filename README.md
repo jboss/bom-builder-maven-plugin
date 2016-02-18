@@ -44,12 +44,17 @@ bomVersion - The version to set in the generated BOM
 bomName - The name to set in the generated BOM
 bomDescription - The description to set in the generated BOM
 exclusions - A list of exclusions to set in the genertated BOM
+dependencyExclusions - A list of dependencies which should not be included in the genertated BOM
 
 Each exclusion should contain four parameters:
   - dependencyGroupId
   - dependencyArtifactId
   - exclusionGroupId
   - exclusionArtifactId
+
+Each dependency exclusion should contain two parameters:
+  - groupId
+  - artifactId
 
 Exclusion Config Example
 -------------------
@@ -82,3 +87,22 @@ The above config will result in POM output that looks similar to the following:
       </exclusions>
     </dependency>
 
+Dependency Exclusion Config Example
+-------------------
+
+    <configuration>
+      <bomGroupId>org.test</bomGroupId>
+      <bomArtifactId>junit-bom</bomArtifactId>
+      <bomVersion>1.0</bomVersion>
+      <dependencyExclusions>
+        <dependencyExclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </dependencyExclusion>
+      </dependencyExclusions>
+    </configuration>
+
+The above config will result in POM which will not contain junit dependency
+
+You can use * for value of artifactId (or groupId) to exclude all dependencies with given groupId and any artifactId
+(or with given artifactId and any groupId)
