@@ -3,11 +3,39 @@ package org.jboss.maven.plugins.bombuilder;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.apache.maven.project.MavenProject;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class BuildBomMojoTest {
+
+
+    @Mock
+    private BuildBomMojo.ModelWriter modelWriter;
+    private BuildBomMojo mojo;
+
+    @Before
+    public void before() {
+        initMocks(this);
+        mojo = createBuildBomMojo();
+    }
+    @Test
+    public void testDependencyVersionIsNotStoredInPropertiesByDefault() throws Exception {
+
+        mojo.execute();
+    }
+    private BuildBomMojo createBuildBomMojo() {
+        BuildBomMojo mojo = new BuildBomMojo(modelWriter);
+        mojo.mavenProject = new MavenProject();
+        mojo.mavenProject.getBuild().setOutputDirectory("target");
+        mojo.outputFilename = "pom.xml";
+        return mojo;
+    }
+
 
     @Test
     public void testMatchesExcludedDependency() throws Exception {

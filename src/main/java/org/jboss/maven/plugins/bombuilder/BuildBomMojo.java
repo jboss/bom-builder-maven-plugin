@@ -78,7 +78,7 @@ public class BuildBomMojo
      * BOM output file
      */
     @Parameter( defaultValue = "bom-pom.xml" )
-    private String outputFilename;
+    String outputFilename;
 
     /**
      * Whether the BOM should include the dependency exclusions that
@@ -98,7 +98,7 @@ public class BuildBomMojo
      * The current project
      */
     @Component
-    private MavenProject mavenProject;
+    MavenProject mavenProject;
 
     /**
      *
@@ -112,13 +112,25 @@ public class BuildBomMojo
     @Component
     private ProjectBuilder projectBuilder;
 
+    private final ModelWriter modelWriter;
+    
+    public BuildBomMojo() {
+        this(new ModelWriter());
+    }
+
+    public BuildBomMojo(ModelWriter modelWriter) {
+        this.versionsTransformer = versionsTransformer;
+        this.modelWriter = modelWriter;
+    }
+
     public void execute()
         throws MojoExecutionException
     {
         getLog().debug( "Generating BOM" );
         Model model = initializeModel();
         addDependencyManagement( model );
-        writeModel( model );
+        modelWriter.writeModel( model, new File( mavenProject.getBuild().getDirectory(), outputFilename ));
+        modelWriter.writeModel(model, new File(mavenProject.getBuild().getDirectory(), outputFilename));
     }
 
     private Model initializeModel()
@@ -224,24 +236,27 @@ public class BuildBomMojo
         }
     }
 
-    private void writeModel( Model pomModel )
-        throws MojoExecutionException
-    {
-        File outputFile = new File( mavenProject.getBuild().getDirectory(), outputFilename );
-        if ( !outputFile.getParentFile().exists() )
-        {
-            outputFile.getParentFile().mkdirs();
-        }
-        try (FileWriter writer = new FileWriter( outputFile )) {
-            MavenXpp3Writer mavenWriter = new MavenXpp3Writer();
-            mavenWriter.write(writer, pomModel);
-        }
-        catch ( IOException e )
-        {
-            e.printStackTrace();
-            throw new MojoExecutionException( "Unable to write pom file.", e );
-        }
 
+    static class ModelWriter {
+
+        void writeModel( Model pomModel, File outputFile )
+            throws MojoExecutionException
+        {
+            if ( !outputFile.getParentFile().exists() )
+            {
+                outputFile.getParentFile().mkdirs();
+            }
+            try (FileWriter writer = new FileWriter( outputFile )) {
+                MavenXpp3Writer mavenWriter = new MavenXpp3Writer();
+                mavenWriter.write(writer, pomModel);
+            }
+            catch ( IOException e )
+            {
+                e.printStackTrace();
+                throw new MojoExecutionException( "Unable to write pom file.", e );
+            }
+
+        }
     }
 
 }
