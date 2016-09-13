@@ -94,6 +94,13 @@ public class BuildBomMojo
     @Parameter
     private List<DependencyExclusion> dependencyExclusions;
 
+
+    /**
+     * Whether use properties to specify dependency versions in BOM
+     */
+    @Parameter
+    boolean usePropertiesForVersion;
+
     /**
      * The current project
      */
@@ -112,13 +119,14 @@ public class BuildBomMojo
     @Component
     private ProjectBuilder projectBuilder;
 
+    private final PomDependencyVersionsTransformer versionsTransformer;
     private final ModelWriter modelWriter;
     
     public BuildBomMojo() {
-        this(new ModelWriter());
+        this(new ModelWriter(), new PomDependencyVersionsTransformer());
     }
 
-    public BuildBomMojo(ModelWriter modelWriter) {
+    public BuildBomMojo(ModelWriter modelWriter, PomDependencyVersionsTransformer versionsTransformer) {
         this.versionsTransformer = versionsTransformer;
         this.modelWriter = modelWriter;
     }
@@ -129,7 +137,10 @@ public class BuildBomMojo
         getLog().debug( "Generating BOM" );
         Model model = initializeModel();
         addDependencyManagement( model );
-        modelWriter.writeModel( model, new File( mavenProject.getBuild().getDirectory(), outputFilename ));
+        if (usePropertiesForVersion) {
+            model = versionsTransformer.transformPomModel(model);
+            getLog().debug( "Dependencies versions converted to properties" );
+        }
         modelWriter.writeModel(model, new File(mavenProject.getBuild().getDirectory(), outputFilename));
     }
 
