@@ -118,16 +118,7 @@ public class BuildBomMojo
         getLog().debug( "Generating BOM" );
         Model model = initializeModel();
         addDependencyManagement( model );
-        try
-        {
-            writeModel( model );
-        }
-        catch ( IOException e )
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            throw new MojoExecutionException( "Unable to write pom file.", e );
-        }
+        writeModel( model );
     }
 
     private Model initializeModel()
@@ -234,17 +225,23 @@ public class BuildBomMojo
     }
 
     private void writeModel( Model pomModel )
-        throws IOException
+        throws MojoExecutionException
     {
-        MavenXpp3Writer mavenWriter = new MavenXpp3Writer();
-
         File outputFile = new File( mavenProject.getBuild().getDirectory(), outputFilename );
         if ( !outputFile.getParentFile().exists() )
         {
             outputFile.getParentFile().mkdirs();
         }
-        FileWriter writer = new FileWriter( outputFile );
-        mavenWriter.write( writer, pomModel );
+        try (FileWriter writer = new FileWriter( outputFile )) {
+            MavenXpp3Writer mavenWriter = new MavenXpp3Writer();
+            mavenWriter.write(writer, pomModel);
+        }
+        catch ( IOException e )
+        {
+            e.printStackTrace();
+            throw new MojoExecutionException( "Unable to write pom file.", e );
+        }
+
     }
 
 }
