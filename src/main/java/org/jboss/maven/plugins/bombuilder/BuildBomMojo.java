@@ -143,6 +143,7 @@ public class BuildBomMojo
         pomModel.setName( bomName );
         pomModel.setDescription( bomDescription );
 
+        pomModel.setProperties(new OrderedProperties());
         pomModel.getProperties().setProperty( "project.build.sourceEncoding", "UTF-8" );
 
         return pomModel;
