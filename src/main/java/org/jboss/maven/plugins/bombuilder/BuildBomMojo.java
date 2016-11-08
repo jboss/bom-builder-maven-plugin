@@ -78,7 +78,7 @@ public class BuildBomMojo
      * BOM output file
      */
     @Parameter( defaultValue = "bom-pom.xml" )
-    private String outputFilename;
+    String outputFilename;
 
     /**
      * Whether the BOM should include the dependency exclusions that
@@ -94,11 +94,18 @@ public class BuildBomMojo
     @Parameter
     private List<DependencyExclusion> dependencyExclusions;
 
+
+    /**
+     * Whether use properties to specify dependency versions in BOM
+     */
+    @Parameter
+    boolean usePropertiesForVersion;
+
     /**
      * The current project
      */
     @Component
-    private MavenProject mavenProject;
+    MavenProject mavenProject;
 
     /**
      *
@@ -112,22 +119,29 @@ public class BuildBomMojo
     @Component
     private ProjectBuilder projectBuilder;
 
+    private final PomDependencyVersionsTransformer versionsTransformer;
+    private final ModelWriter modelWriter;
+    
+    public BuildBomMojo() {
+        this(new ModelWriter(), new PomDependencyVersionsTransformer());
+    }
+
+    public BuildBomMojo(ModelWriter modelWriter, PomDependencyVersionsTransformer versionsTransformer) {
+        this.versionsTransformer = versionsTransformer;
+        this.modelWriter = modelWriter;
+    }
+
     public void execute()
         throws MojoExecutionException
     {
         getLog().debug( "Generating BOM" );
         Model model = initializeModel();
         addDependencyManagement( model );
-        try
-        {
-            writeModel( model );
+        if (usePropertiesForVersion) {
+            model = versionsTransformer.transformPomModel(model);
+            getLog().debug( "Dependencies versions converted to properties" );
         }
-        catch ( IOException e )
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            throw new MojoExecutionException( "Unable to write pom file.", e );
-        }
+        modelWriter.writeModel(model, new File(mavenProject.getBuild().getDirectory(), outputFilename));
     }
 
     private Model initializeModel()
@@ -143,6 +157,7 @@ public class BuildBomMojo
         pomModel.setName( bomName );
         pomModel.setDescription( bomDescription );
 
+        pomModel.setProperties(new OrderedProperties());
         pomModel.getProperties().setProperty( "project.build.sourceEncoding", "UTF-8" );
 
         return pomModel;
@@ -232,18 +247,27 @@ public class BuildBomMojo
         }
     }
 
-    private void writeModel( Model pomModel )
-        throws IOException
-    {
-        MavenXpp3Writer mavenWriter = new MavenXpp3Writer();
 
-        File outputFile = new File( mavenProject.getBuild().getDirectory(), outputFilename );
-        if ( !outputFile.getParentFile().exists() )
+    static class ModelWriter {
+
+        void writeModel( Model pomModel, File outputFile )
+            throws MojoExecutionException
         {
-            outputFile.getParentFile().mkdirs();
+            if ( !outputFile.getParentFile().exists() )
+            {
+                outputFile.getParentFile().mkdirs();
+            }
+            try (FileWriter writer = new FileWriter( outputFile )) {
+                MavenXpp3Writer mavenWriter = new MavenXpp3Writer();
+                mavenWriter.write(writer, pomModel);
+            }
+            catch ( IOException e )
+            {
+                e.printStackTrace();
+                throw new MojoExecutionException( "Unable to write pom file.", e );
+            }
+
         }
-        FileWriter writer = new FileWriter( outputFile );
-        mavenWriter.write( writer, pomModel );
     }
 
 }

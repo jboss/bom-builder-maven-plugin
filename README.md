@@ -106,3 +106,15 @@ The above config will result in POM which will not contain junit dependency
 
 You can use * for value of artifactId (or groupId) to exclude all dependencies with given groupId and any artifactId
 (or with given artifactId and any groupId)
+
+Using properties for version
+----------------------------
+
+    <configuration>
+      <bomGroupId>org.test</bomGroupId>
+      <bomArtifactId>junit-bom</bomArtifactId>
+      <bomVersion>1.0</bomVersion>
+      <usePropertiesForVersion>true</usePropertiesForVersion>
+    </configuration>
+
+The above config will result in POM where version of dependencies is specified via properties.
