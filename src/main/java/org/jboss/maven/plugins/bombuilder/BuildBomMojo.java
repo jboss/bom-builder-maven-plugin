@@ -3,11 +3,13 @@ package org.jboss.maven.plugins.bombuilder;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
+import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
@@ -66,7 +68,7 @@ public class BuildBomMojo
      * BOM name
      */
     @Parameter
-    private boolean addVersionProperties;
+    boolean addVersionProperties;
 
    /**
      * BOM description
@@ -100,6 +102,24 @@ public class BuildBomMojo
      */
     @Parameter
     boolean usePropertiesForVersion;
+
+    /**
+     * Whether to use dependency management dependencies.
+     */
+    @Parameter(defaultValue = "false")
+    boolean useDependencyManagementDependencies;
+
+    /**
+     * Wheter to use dependencies.
+     */
+    @Parameter(defaultValue = "false")
+    boolean useDependencies;
+
+    /**
+     * Wheter to use all resolved dependencies (defaults to true).
+     */
+    @Parameter(defaultValue = "true")
+    boolean useAllResolvedDependencies = true;
 
     /**
      * The current project
@@ -163,67 +183,93 @@ public class BuildBomMojo
         return pomModel;
     }
 
-    private void addDependencyManagement( Model pomModel )
-    {
-        // Sort the artifacts for readability
-        List<Artifact> projectArtifacts = new ArrayList<Artifact>( mavenProject.getArtifacts() );
-        Collections.sort( projectArtifacts );
+    private void addDependencyManagement( Model pomModel ) {
+        List<Dependency> dependencies = new LinkedList<>();
 
-        Properties versionProperties = new Properties();
-        DependencyManagement depMgmt = new DependencyManagement();
-        for ( Artifact artifact : projectArtifacts )
-        {
-            if (isExcludedDependency(artifact)) {
-                continue;
-            }
-
-            String versionPropertyName = VERSION_PROPERTY_PREFIX + artifact.getGroupId();
-            if (versionProperties.getProperty(versionPropertyName) != null
-                && !versionProperties.getProperty(versionPropertyName).equals(artifact.getVersion())) {
-                versionPropertyName = VERSION_PROPERTY_PREFIX + artifact.getGroupId() + "." + artifact.getArtifactId();
-            }
-            versionProperties.setProperty(versionPropertyName, artifact.getVersion());
-
-            Dependency dep = new Dependency();
-            dep.setGroupId( artifact.getGroupId() );
-            dep.setArtifactId( artifact.getArtifactId() );
-            dep.setVersion( artifact.getVersion() );
-            if ( !StringUtils.isEmpty( artifact.getClassifier() ))
-            {
-                dep.setClassifier( artifact.getClassifier() );
-            }
-            if ( !StringUtils.isEmpty( artifact.getType() ))
-            {
-                dep.setType( artifact.getType() );
-            }
-            if (exclusions != null) {
-                applyExclusions(artifact, dep);
-            }
-            depMgmt.addDependency( dep );
+        if (useAllResolvedDependencies) {
+            dependencies.addAll(getArtifactsAsDependencies());
         }
-        pomModel.setDependencyManagement( depMgmt );
+        if (useDependencies) {
+            dependencies.addAll(getDependencies());
+        }
+        if (useDependencyManagementDependencies) {
+            dependencies.addAll(getDependencyManagementDependencies());
+        }
+
+        final DependencyManagement depMgmt = new DependencyManagement();
+        dependencies.stream()
+                .sorted(Comparator.comparing(Dependency::getGroupId).thenComparing(Dependency::getArtifactId))
+                .forEach(depMgmt::addDependency);
+
         if (addVersionProperties) {
+            Properties versionProperties = generateVersionProperties(dependencies);
             pomModel.getProperties().putAll(versionProperties);
         }
-        getLog().debug( "Added " + projectArtifacts.size() + " dependencies." );
+
+        pomModel.setDependencyManagement(depMgmt);
+        getLog().debug( "Added " + dependencies.size() + " dependencies." );
     }
 
-    boolean isExcludedDependency(Artifact artifact) {
+    private List<Dependency> getArtifactsAsDependencies() {
+        return mavenProject.getArtifacts().stream()
+                .map(this::map)
+                .filter(this::isDependencyNotExcluded)
+                .collect(Collectors.toList());
+    }
+
+    private List<Dependency> getDependencies() {
+        return mavenProject.getDependencies().stream()
+                .map(Dependency::clone)
+                .filter(this::isDependencyNotExcluded)
+                .collect(Collectors.toList());
+    }
+
+    private List<Dependency> getDependencyManagementDependencies() {
+        final DependencyManagement dependencyManagement = mavenProject.getDependencyManagement();
+        if (dependencyManagement == null) {
+            return Collections.emptyList();
+        }
+        return dependencyManagement.getDependencies().stream()
+                .map(Dependency::clone)
+                .filter(this::isDependencyNotExcluded)
+                .collect(Collectors.toList());
+    }
+
+    private Dependency map(Artifact artifact) {
+        Dependency dep = new Dependency();
+        dep.setGroupId( artifact.getGroupId() );
+        dep.setArtifactId( artifact.getArtifactId() );
+        dep.setVersion( artifact.getVersion() );
+        if ( !StringUtils.isEmpty( artifact.getClassifier() ))
+        {
+            dep.setClassifier( artifact.getClassifier() );
+        }
+        if ( !StringUtils.isEmpty( artifact.getType() ))
+        {
+            dep.setType( artifact.getType() );
+        }
+        if (exclusions != null) {
+            applyExclusions(artifact, dep);
+        }
+        return dep;
+    }
+
+    boolean isDependencyNotExcluded(Dependency dependency) {
         if (dependencyExclusions == null || dependencyExclusions.size() == 0) {
-            return false;
+            return true;
         }
         for (DependencyExclusion exclusion : dependencyExclusions) {
-            if (matchesExcludedDependency(artifact, exclusion)) {
-                getLog().debug( "Artifact " + artifact.getGroupId() + ":" + artifact.getArtifactId() + " matches excluded dependency " + exclusion.getGroupId() + ":" + exclusion.getArtifactId() );
-                return  true;
+            if (matchesExcludedDependency(dependency, exclusion)) {
+                getLog().debug( "Dependency " + dependency.getGroupId() + ":" + dependency.getArtifactId() + " matches excluded dependency " + exclusion.getGroupId() + ":" + exclusion.getArtifactId() );
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
-    boolean matchesExcludedDependency(Artifact artifact, DependencyExclusion exclusion) {
-        String groupId = defaultAndTrim(artifact.getGroupId());
-        String artifactId = defaultAndTrim(artifact.getArtifactId());
+    boolean matchesExcludedDependency(Dependency dependency, DependencyExclusion exclusion) {
+        String groupId = defaultAndTrim(dependency.getGroupId());
+        String artifactId = defaultAndTrim(dependency.getArtifactId());
         String exclusionGroupId = defaultAndTrim(exclusion.getGroupId());
         String exclusionArtifactId = defaultAndTrim(exclusion.getArtifactId());
         boolean groupIdMatched = ("*".equals (exclusionGroupId) || groupId.equals(exclusionGroupId));
@@ -247,6 +293,18 @@ public class BuildBomMojo
         }
     }
 
+    private Properties generateVersionProperties(List<Dependency> dependencies) {
+        Properties versionProperties = new Properties();
+        dependencies.forEach(dependency -> {
+            String versionPropertyName = VERSION_PROPERTY_PREFIX + dependency.getGroupId();
+            if (versionProperties.getProperty(versionPropertyName) != null
+                    && !versionProperties.getProperty(versionPropertyName).equals(dependency.getVersion())) {
+                versionPropertyName = VERSION_PROPERTY_PREFIX + dependency.getGroupId() + "." + dependency.getArtifactId();
+            }
+            versionProperties.setProperty(versionPropertyName, dependency.getVersion());
+        });
+        return versionProperties;
+    }
 
     static class ModelWriter {
 
