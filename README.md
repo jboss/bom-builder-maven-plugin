@@ -38,23 +38,31 @@ The plugin is configured in the "plugins" section of the pom.
 
 Config Parameters
 -----------------
-bomGroupId - The groupId to set in the generated BOM
-bomArtifactId - The artifactId to set in the generated BOM
-bomVersion - The version to set in the generated BOM
-bomName - The name to set in the generated BOM
-bomDescription - The description to set in the generated BOM
-exclusions - A list of exclusions to set in the genertated BOM
-dependencyExclusions - A list of dependencies which should not be included in the genertated BOM
+
+|               Config                |                                Description                                |
+|:------------------------------------|:--------------------------------------------------------------------------|
+| bomGroupId                          | The groupId to set in the generated BOM                                   |
+| bomArtifactId                       | The artifactId to set in the generated BOM                                |
+| bomVersion                          | The version to set in the generated BOM                                   |
+| bomName                             | The name to set in the generated BOM                                      |
+| bomDescription                      | The description to set in the generated BOM                               |
+| exclusions                          | A list of exclusions to set in the genertated BOM                         |
+| dependencyExclusions                | A list of dependencies which should not be included in the genertated BOM |
+| useArtifacts                        | Use all dependencies and transitive dependencies (default: true)          |
+| useDependencies                     | Use only defined dependencies (default: false)                            |
+| useDependencyManagementDependencies | Use dependency management dependencies (default: false)                   |
 
 Each exclusion should contain four parameters:
-  - dependencyGroupId
-  - dependencyArtifactId
-  - exclusionGroupId
-  - exclusionArtifactId
+
+- dependencyGroupId
+- dependencyArtifactId
+- exclusionGroupId
+- exclusionArtifactId
 
 Each dependency exclusion should contain two parameters:
-  - groupId
-  - artifactId
+
+- groupId
+- artifactId
 
 Exclusion Config Example
 -------------------

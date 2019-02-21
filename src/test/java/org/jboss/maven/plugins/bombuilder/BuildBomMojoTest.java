@@ -1,21 +1,26 @@
 package org.jboss.maven.plugins.bombuilder;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.handler.ArtifactHandler;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
+import java.io.File;
+import java.util.Collections;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
 import org.apache.maven.project.MavenProject;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.mockito.internal.verification.VerificationModeFactory.times;
-
+@RunWith(MockitoJUnitRunner.class)
 public class BuildBomMojoTest {
 
 
@@ -27,8 +32,10 @@ public class BuildBomMojoTest {
 
     @Before
     public void before() {
-        initMocks(this);
-        mojo = createBuildBomMojo();
+        mojo = new BuildBomMojo(modelWriter, versionTransformer);
+        mojo.mavenProject = new MavenProject();
+        mojo.mavenProject.getBuild().setOutputDirectory("target");
+        mojo.outputFilename = "pom.xml";
     }
     
     @Test
@@ -44,20 +51,55 @@ public class BuildBomMojoTest {
 
         mojo.execute();
 
-        verify(versionTransformer, times(1)).transformPomModel(any(Model.class));
+        verify(versionTransformer).transformPomModel(any(Model.class));
     }
-
-    private BuildBomMojo createBuildBomMojo() {
-        BuildBomMojo mojo = new BuildBomMojo(modelWriter, versionTransformer);
-        mojo.mavenProject = new MavenProject();
-        mojo.mavenProject.getBuild().setOutputDirectory("target");
-        mojo.outputFilename = "pom.xml";
-        return mojo;
-    }
-
 
     @Test
-    public void testMatchesExcludedDependency() throws Exception {
+    public void testDependencyManagementRetrieved() throws Exception {
+        // given
+        mojo.useDependencyManagementDependencies = true;
+        mojo.useAllResolvedDependencies = false;
+
+        mojo.mavenProject.setDependencies(Collections.singletonList(createDependency("groupId", "shouldNotBeUsed")));
+        mojo.mavenProject.getModel().setDependencyManagement(new DependencyManagement());
+        mojo.mavenProject.getDependencyManagement().addDependency(createDependency("groupId", "artifactId1"));
+        mojo.mavenProject.getDependencyManagement().addDependency(createDependency("groupId", "artifactId2"));
+
+        // when
+        mojo.execute();
+
+        // then
+        final ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
+        verify(modelWriter).writeModel(modelCaptor.capture(), any(File.class));
+        final Model model = modelCaptor.getValue();
+        assertThat(model.getDependencyManagement().getDependencies().size(), equalTo(2));
+        assertThat(model.getDependencyManagement().getDependencies().get(0).getArtifactId(), equalTo("artifactId1"));
+        assertThat(model.getDependencyManagement().getDependencies().get(1).getArtifactId(), equalTo("artifactId2"));
+    }
+
+    @Test
+    public void testDependencyRetrieved() throws Exception {
+        // given
+        mojo.useDependencies = true;
+        mojo.useAllResolvedDependencies = false;
+
+        mojo.mavenProject.setDependencies(Collections.singletonList(createDependency("groupId", "artifactId")));
+        mojo.mavenProject.getModel().setDependencyManagement(new DependencyManagement());
+        mojo.mavenProject.getDependencyManagement().addDependency(createDependency("groupId", "shouldNotBeUsed"));
+
+        // when
+        mojo.execute();
+
+        // then
+        final ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
+        verify(modelWriter).writeModel(modelCaptor.capture(), any(File.class));
+        final Model model = modelCaptor.getValue();
+        assertThat(model.getDependencyManagement().getDependencies().size(), equalTo(1));
+        assertThat(model.getDependencyManagement().getDependencies().get(0).getArtifactId(), equalTo("artifactId"));
+    }
+
+    @Test
+    public void testMatchesExcludedDependency() {
         assertArtifactMatchesExcludedDependency(true, "groupId", "artifactId", "groupId", "artifactId");
         assertArtifactMatchesExcludedDependency(true, "groupId", "artifactId", "*", "artifactId");
         assertArtifactMatchesExcludedDependency(true, "groupId", "artifactId", "groupId", "*");
@@ -71,7 +113,7 @@ public class BuildBomMojoTest {
     }
 
     private void assertArtifactMatchesExcludedDependency(boolean expected, String artifactGroupId, String artifactArtifactId, String dependencyGroupId, String dependencyArtifactId) {
-        Artifact artifact = createArtifact(artifactGroupId, artifactArtifactId);
+        Dependency artifact = createDependency(artifactGroupId, artifactArtifactId);
         DependencyExclusion exclusion = createDependencyExclusion(dependencyGroupId, dependencyArtifactId);
         BuildBomMojo mojo = new BuildBomMojo();
         assertEquals(expected, mojo.matchesExcludedDependency(artifact, exclusion));
@@ -81,7 +123,14 @@ public class BuildBomMojoTest {
         return new DependencyExclusion(groupId, artifactId);
     }
 
-    private Artifact createArtifact(String groupId, String artifactId) {
-        return new DefaultArtifact(groupId, artifactId, "version", "scope", "type", "classifier", (ArtifactHandler)null);
+    private Dependency createDependency(String groupId, String artifactId) {
+        final Dependency dependency = new Dependency();
+        dependency.setGroupId(groupId);
+        dependency.setArtifactId(artifactId);
+        dependency.setVersion("version");
+        dependency.setScope("scope");
+        dependency.setType("type");
+        dependency.setClassifier("classifier");
+        return dependency;
     }
 }
