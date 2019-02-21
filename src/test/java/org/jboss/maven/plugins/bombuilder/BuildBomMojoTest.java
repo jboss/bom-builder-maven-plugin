@@ -1,20 +1,18 @@
 package org.jboss.maven.plugins.bombuilder;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.handler.ArtifactHandler;
-import org.apache.maven.model.Model;
-import org.apache.maven.project.MavenProject;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
+
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Model;
+import org.apache.maven.project.MavenProject;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
 public class BuildBomMojoTest {
 
@@ -57,7 +55,7 @@ public class BuildBomMojoTest {
 
 
     @Test
-    public void testMatchesExcludedDependency() throws Exception {
+    public void testMatchesExcludedDependency() {
         assertArtifactMatchesExcludedDependency(true, "groupId", "artifactId", "groupId", "artifactId");
         assertArtifactMatchesExcludedDependency(true, "groupId", "artifactId", "*", "artifactId");
         assertArtifactMatchesExcludedDependency(true, "groupId", "artifactId", "groupId", "*");
@@ -71,7 +69,7 @@ public class BuildBomMojoTest {
     }
 
     private void assertArtifactMatchesExcludedDependency(boolean expected, String artifactGroupId, String artifactArtifactId, String dependencyGroupId, String dependencyArtifactId) {
-        Artifact artifact = createArtifact(artifactGroupId, artifactArtifactId);
+        Dependency artifact = createDependency(artifactGroupId, artifactArtifactId);
         DependencyExclusion exclusion = createDependencyExclusion(dependencyGroupId, dependencyArtifactId);
         BuildBomMojo mojo = new BuildBomMojo();
         assertEquals(expected, mojo.matchesExcludedDependency(artifact, exclusion));
@@ -81,7 +79,14 @@ public class BuildBomMojoTest {
         return new DependencyExclusion(groupId, artifactId);
     }
 
-    private Artifact createArtifact(String groupId, String artifactId) {
-        return new DefaultArtifact(groupId, artifactId, "version", "scope", "type", "classifier", (ArtifactHandler)null);
+    private Dependency createDependency(String groupId, String artifactId) {
+        final Dependency dependency = new Dependency();
+        dependency.setGroupId(groupId);
+        dependency.setArtifactId(artifactId);
+        dependency.setVersion("version");
+        dependency.setScope("scope");
+        dependency.setType("type");
+        dependency.setClassifier("classifier");
+        return dependency;
     }
 }

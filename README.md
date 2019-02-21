@@ -1,15 +1,16 @@
 bom-builder-maven-plugin
 ========================
 
-A Maven plugin to generate a dependency management POM, sometimes called a 
-BOM or bill of materials POM.  The plugin reads the set of dependencies in 
-the current project, and writes a new POM to "target/bom-pom.xml" which
-contains a dependency management section listing the dependencies of
-the current project.
+A Maven plugin to generate a dependency management POM, sometimes called
+a BOM or bill of materials POM. The plugin reads the set of dependencies
+in the current project, and writes a new POM to "target/bom-pom.xml"
+which contains a dependency management section listing the dependencies
+of the current project.
 
 
 Usage
 -----
+
 The plugin is configured in the "plugins" section of the pom.
 
     <plugins>
@@ -35,29 +36,36 @@ The plugin is configured in the "plugins" section of the pom.
       </plugin>
     </plugins>
 
-
 Config Parameters
 -----------------
-bomGroupId - The groupId to set in the generated BOM
-bomArtifactId - The artifactId to set in the generated BOM
-bomVersion - The version to set in the generated BOM
-bomName - The name to set in the generated BOM
-bomDescription - The description to set in the generated BOM
-exclusions - A list of exclusions to set in the genertated BOM
-dependencyExclusions - A list of dependencies which should not be included in the genertated BOM
+
+|               Config                |                                Description                                |
+|:------------------------------------|:--------------------------------------------------------------------------|
+| bomGroupId                          | The groupId to set in the generated BOM                                   |
+| bomArtifactId                       | The artifactId to set in the generated BOM                                |
+| bomVersion                          | The version to set in the generated BOM                                   |
+| bomName                             | The name to set in the generated BOM                                      |
+| bomDescription                      | The description to set in the generated BOM                               |
+| exclusions                          | A list of exclusions to set in the genertated BOM                         |
+| dependencyExclusions                | A list of dependencies which should not be included in the genertated BOM |
+| useArtifacts                        | Use all dependencies and transitive dependencies (default: true)          |
+| useDependencies                     | Use only defined dependencies (default: false)                            |
+| useDependencyManagementDependencies | Use dependency management dependencies (default: false)                   |
 
 Each exclusion should contain four parameters:
-  - dependencyGroupId
-  - dependencyArtifactId
-  - exclusionGroupId
-  - exclusionArtifactId
+
+- dependencyGroupId
+- dependencyArtifactId
+- exclusionGroupId
+- exclusionArtifactId
 
 Each dependency exclusion should contain two parameters:
-  - groupId
-  - artifactId
+
+- groupId
+- artifactId
 
 Exclusion Config Example
--------------------
+------------------------
 
     <configuration>
       <bomGroupId>org.test</bomGroupId>
@@ -73,7 +81,8 @@ Exclusion Config Example
       </exclusions>
     </configuration>
 
-The above config will result in POM output that looks similar to the following:
+The above config will result in POM output that looks similar to the
+following:
 
     <dependency>
       <groupId>junit</groupId>
@@ -88,7 +97,7 @@ The above config will result in POM output that looks similar to the following:
     </dependency>
 
 Dependency Exclusion Config Example
--------------------
+-----------------------------------
 
     <configuration>
       <bomGroupId>org.test</bomGroupId>
@@ -102,10 +111,12 @@ Dependency Exclusion Config Example
       </dependencyExclusions>
     </configuration>
 
-The above config will result in POM which will not contain junit dependency
+The above config will result in POM which will not contain junit
+dependency
 
-You can use * for value of artifactId (or groupId) to exclude all dependencies with given groupId and any artifactId
-(or with given artifactId and any groupId)
+You can use * for value of artifactId (or groupId) to exclude all
+dependencies with given groupId and any artifactId (or with given
+artifactId and any groupId)
 
 Using properties for version
 ----------------------------
@@ -117,4 +128,5 @@ Using properties for version
       <usePropertiesForVersion>true</usePropertiesForVersion>
     </configuration>
 
-The above config will result in POM where version of dependencies is specified via properties.
+The above config will result in POM where version of dependencies is
+specified via properties.
