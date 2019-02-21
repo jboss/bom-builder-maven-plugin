@@ -71,7 +71,7 @@ public class BuildBomMojo
      * BOM name
      */
     @Parameter
-    private boolean addVersionProperties;
+    boolean addVersionProperties;
 
    /**
      * BOM description
@@ -110,19 +110,19 @@ public class BuildBomMojo
      * Whether to use dependency management dependencies.
      */
     @Parameter(defaultValue = "false")
-    private boolean useDependencyManagementDependencies;
+    boolean useDependencyManagementDependencies;
 
     /**
      * Wheter to use dependencies.
      */
     @Parameter(defaultValue = "false")
-    private boolean useDependencies;
+    boolean useDependencies;
 
     /**
      * Wheter to use all resolved dependencies (defaults to true).
      */
     @Parameter(defaultValue = "true")
-    private boolean useArtifacts;
+    boolean useArtifacts;
 
     /**
      * The current project
@@ -160,7 +160,7 @@ public class BuildBomMojo
         getLog().debug( "Generating BOM" );
         Model model = initializeModel();
         addDependencyManagement( model );
-        if (usePropertiesForVersion) {
+        if (addVersionProperties) {
             model = versionsTransformer.transformPomModel(model);
             getLog().debug( "Dependencies versions converted to properties" );
         }
@@ -204,7 +204,7 @@ public class BuildBomMojo
                 .sorted(Comparator.comparing(Dependency::getGroupId).thenComparing(Dependency::getArtifactId))
                 .forEach(depMgmt::addDependency);
 
-        if (addVersionProperties) {
+        if (usePropertiesForVersion) {
             Properties versionProperties = generateVersionProperties(dependencies);
             pomModel.getProperties().putAll(versionProperties);
         }

@@ -38,11 +38,14 @@ public class BuildBomMojoTest {
 
     @Test
     public void testDependencyVersionIsStoredInProperties() throws Exception {
+        mojo.addVersionProperties = true;
         mojo.usePropertiesForVersion = true;
-
+        mojo.useArtifacts = true;
+        mojo.useDependencyManagementDependencies = true;
+        mojo.useDependencies = true;
         mojo.execute();
 
-        verify(versionTransformer, times(1)).transformPomModel(any(Model.class));
+        verify(versionTransformer).transformPomModel(any(Model.class));
     }
 
     private BuildBomMojo createBuildBomMojo() {
