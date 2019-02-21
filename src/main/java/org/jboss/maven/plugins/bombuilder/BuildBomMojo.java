@@ -160,7 +160,7 @@ public class BuildBomMojo
         getLog().debug( "Generating BOM" );
         Model model = initializeModel();
         addDependencyManagement( model );
-        if (addVersionProperties) {
+        if (usePropertiesForVersion) {
             model = versionsTransformer.transformPomModel(model);
             getLog().debug( "Dependencies versions converted to properties" );
         }
@@ -204,7 +204,7 @@ public class BuildBomMojo
                 .sorted(Comparator.comparing(Dependency::getGroupId).thenComparing(Dependency::getArtifactId))
                 .forEach(depMgmt::addDependency);
 
-        if (usePropertiesForVersion) {
+        if (addVersionProperties) {
             Properties versionProperties = generateVersionProperties(dependencies);
             pomModel.getProperties().putAll(versionProperties);
         }
