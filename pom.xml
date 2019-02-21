@@ -34,6 +34,9 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <mavenVersion>3.0.4</mavenVersion>
     <mavenPluginPluginVersion>3.2</mavenPluginPluginVersion>
+
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
   </properties>
 
   <dependencies>
