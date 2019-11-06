@@ -1,3 +1,5 @@
+[![](https://jitpack.io/v/dperezcabrera/bom-builder-maven-plugin.svg)](https://jitpack.io/#dperezcabrera/bom-builder-maven-plugin)
+
 bom-builder-maven-plugin
 ========================
 
