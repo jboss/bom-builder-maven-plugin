@@ -36,6 +36,12 @@ The plugin is configured in the "plugins" section of the pom.
     </plugins>
 
 
+With no configuration usage
+---------------------------
+Example without configuration:
+
+    mvn org.jboss.maven.plugins:bom-builder-maven-plugin:1.2.1:build-bom [-DbomGroupId=your-group] [-DbomArtifactId=your-artifact] [-DbomVersion=0.0.1]
+
 Config Parameters
 -----------------
 bomGroupId - The groupId to set in the generated BOM
