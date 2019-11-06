@@ -17,7 +17,7 @@ The plugin is configured in the "plugins" section of the pom.
 
     <plugins>
       <plugin>
-        <groupId>com.github.dperezcabrera.maven.plugins</groupId>
+        <groupId>com.github.dperezcabrera</groupId>
         <artifactId>bom-builder-maven-plugin</artifactId>
         <version>1.2.1</version>
         <executions>
