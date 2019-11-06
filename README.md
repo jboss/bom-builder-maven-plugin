@@ -1,4 +1,5 @@
 [![](https://jitpack.io/v/dperezcabrera/bom-builder-maven-plugin.svg)](https://jitpack.io/#dperezcabrera/bom-builder-maven-plugin)
+[![Download](https://api.bintray.com/packages/dperezcabrera/public/bom-builder-maven-plugin/images/download.svg) ](https://bintray.com/dperezcabrera/public/bom-builder-maven-plugin/_latestVersion)
 
 bom-builder-maven-plugin
 ========================
@@ -42,7 +43,7 @@ With no configuration usage
 ---------------------------
 Example without configuration:
 
-    mvn com.github.dperezcabrera.maven.plugins:bom-builder-maven-plugin:1.2.1:build-bom [-DbomGroupId=your-group] [-DbomArtifactId=your-artifact] [-DbomVersion=0.0.1]
+    mvn com.github.dperezcabrera:bom-builder-maven-plugin:1.2.1:build-bom [-DbomGroupId=your-group] [-DbomArtifactId=your-artifact] [-DbomVersion=0.0.1]
 
 Config Parameters
 -----------------
