@@ -14,9 +14,9 @@ The plugin is configured in the "plugins" section of the pom.
 
     <plugins>
       <plugin>
-        <groupId>org.jboss.maven.plugins</groupId>
+        <groupId>com.github.dperezcabrera.maven.plugins</groupId>
         <artifactId>bom-builder-maven-plugin</artifactId>
-        <version>1.0.0.Beta3</version>
+        <version>1.2.1</version>
         <executions>
           <execution>
             <id>build-bom</id>
@@ -40,7 +40,7 @@ With no configuration usage
 ---------------------------
 Example without configuration:
 
-    mvn org.jboss.maven.plugins:bom-builder-maven-plugin:1.2.1:build-bom [-DbomGroupId=your-group] [-DbomArtifactId=your-artifact] [-DbomVersion=0.0.1]
+    mvn com.github.dperezcabrera.maven.plugins:bom-builder-maven-plugin:1.2.1:build-bom [-DbomGroupId=your-group] [-DbomArtifactId=your-artifact] [-DbomVersion=0.0.1]
 
 Config Parameters
 -----------------
