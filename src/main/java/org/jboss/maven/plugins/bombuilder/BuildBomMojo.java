@@ -41,19 +41,19 @@ public class BuildBomMojo
     /**
      * BOM groupId
      */
-    @Parameter( required = true, property = "bomGroupId" )
+    @Parameter( defaultValue = "your-group-id", property = "bomGroupId" )
     private String bomGroupId;
 
     /**
      * BOM artifactId
      */
-    @Parameter( required = true, property = "bomArtifactId" )
+    @Parameter( defaultValue = "artifact-bom", property = "bomArtifactId" )
     private String bomArtifactId;
 
     /**
      * BOM version
      */
-    @Parameter( required = true, property = "bomVersion" )
+    @Parameter( defaultValue = "1.0.0-SNAPSHOT", property = "bomVersion" )
     private String bomVersion;
 
     /**
